@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Portfolio</title>
+  <style>
+    * {margin: 0; padding: 0; box-sizing: border-box;}
+    body {
+      font-family: "Poppins", sans-serif;
+      line-height: 1.6;
+      color: #333;
+      scroll-behavior: smooth;
+      background: #f0f4f8;
+    }
+    header {
+      background: linear-gradient(120deg, #4a90e2, #357ABD);
+      color: #fff; padding: 60px 20px; text-align: center;
+      animation: fadeIn 2s ease-in-out;
+    }
+    header h1 {font-size: 3rem; margin-bottom: 15px; letter-spacing: 2px;}
+    header p {font-size: 1.2rem;}
+    .profile-pic {
+      width: 150px; border-radius: 50%; margin-bottom: 20px;
+      border: 4px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      transition: transform 0.3s;
+    }
+    .profile-pic:hover {transform: scale(1.1);}
+    nav {
+      background: #222; padding: 15px; text-align: center;
+      position: sticky; top: 0; z-index: 1000;
+    }
+    nav a {
+      color: #fff; margin: 0 20px; text-decoration: none; font-weight: bold;
+      position: relative;
+    }
+    nav a::after {
+      content: ""; width: 0; height: 2px; background: #4a90e2;
+      position: absolute; left: 0; bottom: -5px; transition: 0.3s;
+    }
+    nav a:hover::after {width: 100%;}
+    section {padding: 70px 20px; max-width: 1100px; margin: auto;}
+    h2 {color: #357ABD; margin-bottom: 25px; font-size: 2rem;}
+    .skills {display: flex; flex-wrap: wrap; gap: 12px; margin-top: 15px;}
+    .skill {
+      background: #4a90e2; color: white; padding: 10px 18px;
+      border-radius: 25px; font-size: 0.9rem;
+      transition: transform 0.3s, background 0.3s;
+    }
+    .skill:hover {background: #24527A; transform: scale(1.1);}
+    .projects-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 25px;
+    }
+    .project-card {
+      border-radius: 12px; padding: 20px; background: white;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .project-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    .contact form {
+      display: flex; flex-direction: column; gap: 15px; max-width: 600px;
+    }
+    .contact input, .contact textarea {
+      padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 100%;
+      transition: border 0.3s, box-shadow 0.3s;
+    }
+    .contact input:focus, .contact textarea:focus {
+      border: 1px solid #4a90e2; outline: none;
+      box-shadow: 0 0 8px rgba(74, 144, 226, 0.3);
+    }
+    .contact button {
+      background: #357ABD; color: #fff; border: none; padding: 12px;
+      border-radius: 8px; cursor: pointer; font-size: 1rem;
+      transition: background 0.3s, transform 0.3s;
+    }
+    .contact button:hover {
+      background: #24527A; transform: scale(1.05);
+    }
+    footer {
+      text-align: center; background: #222; color: white; padding: 20px;
+      margin-top: 50px;
+    }
+    /* Animations */
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(-20px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+    [data-animate] {
+      opacity: 0; transform: translateY(30px);
+      transition: all 0.8s ease-out;
+    }
+    [data-animate].active {
+      opacity: 1; transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <img src="https://via.placeholder.com/150" alt="Profile Photo" class="profile-pic">
+    <h1>Mishthi Chavan</h1>
+    <p>Web Developer | CyberSecurity | Problem Solver</p>
+  </header>
+
+  <!-- Navigation -->
+  <nav>
+    <a href="#about">About Me</a>
+    <a href="#projects">Projects</a>
+    <a href="#contact">Contact</a>
+  </nav>
+
+  <!-- About Me Section -->
+  <section id="about" class="about" data-animate>
+    <h2>About Me</h2>
+    <p>Hello! I am a student currently pursuing the Bachelor’s degree of Computer
+Application with a strong interest in web development, programming,
+artificial intelligence and machine learning, database management. I am
+looking for an internship opportunity where I can apply my academic
+knowledge in real world setting where I can learn, contribute and grow.</p>
+    
+    <h3>Education</h3>
+    <ul>
+      <li>Bachelor’s in Computer Application – MULUND COLLEGE OF COMMERCE</li>
+      <li>H.S.C - NES JUNIOR COLLEGE OF ARTS,SCIENCE & COMMERCE.(2022-23)</li>
+    </ul>
+
+    <h3>Professional Experience</h3>
+    <ul>
+      <li>I do not have formal work experience yet, but I am eager to learn and gain practical skills through an internship.</li>
+    </ul>
+
+    <h3>Skills</h3>
+    <div class="skills">
+      <span class="skill">HTML</span>
+      <span class="skill">CSS</span>
+      <span class="skill">JavaScript</span>
+      <span class="skill">Python</span>
+      <span class="skill">React.js</span>
+      <span class="skill">Node.js</span>
+      <span class="skill">Microsoft Excel</span>
+     <span class="skill">Advanced Excel</span>
+      <span class="skill">Tally Prime</span>
+       <span class="skill">Data Entry</span>
+    </div>
+  </section>
+
+  <!-- Projects Section -->
+  <section id="projects" class="projects" data-animate>
+    <h2>Projects</h2>
+	<ul>
+		<li>I have not yet done any big and actual projects but i am working on it with the projects i have gotten from prodify internship and my cybersecurity internship.</li>
+	</ul>
+      </section>
+
+  <!-- Contact Section -->
+  <section id="contact" class="contact" data-animate>
+    <h2>Contact Me</h2>
+    <form>
+      <input type="text" placeholder="Your Name" required>
+      <input type="email" placeholder="Your Email" required>
+      <textarea rows="5" placeholder="Your Message"></textarea>
+      <button type="submit">Send Message</button>
+    </form>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2025 Mishthi Chavan | All Rights Reserved</p>
+  </footer>
+
+  <!-- Scroll Animation Script -->
+  <script>
+    const elements = document.querySelectorAll("[data-animate]");
+    const revealOnScroll = () => {
+      const triggerBottom = window.innerHeight * 0.85;
+      elements.forEach(el => {
+        const boxTop = el.getBoundingClientRect().top;
+        if(boxTop < triggerBottom) {
+          el.classList.add("active");
+        }
+      });
+    };
+    window.addEventListener("scroll", revealOnScroll);
+    revealOnScroll();
+  </script>
+
+</body>
+</html>

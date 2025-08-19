@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather App (No API Key)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #36d1dc, #5b86e5);
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .weather-container {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 20px;
+      border-radius: 15px;
+      display: inline-block;
+      min-width: 300px;
+    }
+
+    input {
+      padding: 10px;
+      width: 200px;
+      border: none;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 8px;
+      margin: 5px;
+      background: #0078ff;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #005fcc;
+    }
+
+    .weather-result {
+      margin-top: 20px;
+    }
+
+    .weather-result p {
+      margin: 8px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🌤 Weather App</h1>
+
+  <div class="weather-container">
+    <input type="text" id="cityInput" placeholder="Enter city name">
+    <button onclick="getWeather()">Search</button>
+    <button onclick="getLocationWeather()">📍 Current Location</button>
+
+    <div id="weatherResult" class="weather-result"></div>
+  </div>
+
+  <script>
+    // Function to fetch weather by city (using Open-Meteo Geocoding + Weather API)
+    async function getWeather() {
+      const city = document.getElementById("cityInput").value;
+      if (!city) {
+        alert("Please enter a city name!");
+        return;
+      }
+
+      // Step 1: Get city coordinates
+      const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1`;
+      const geoRes = await fetch(geoUrl);
+      const geoData = await geoRes.json();
+
+      if (!geoData.results || geoData.results.length === 0) {
+        document.getElementById("weatherResult").innerHTML = `<p>❌ City not found.</p>`;
+        return;
+      }
+
+      const lat = geoData.results[0].latitude;
+      const lon = geoData.results[0].longitude;
+      const place = geoData.results[0].name + ", " + geoData.results[0].country;
+
+      // Step 2: Get weather from coordinates
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+      fetchWeather(url, place);
+    }
+
+    // Function to fetch weather by location
+    function getLocationWeather() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+          fetchWeather(url, "Your Location");
+        });
+      } else {
+        alert("Geolocation is not supported by this browser.");
+      }
+    }
+
+    // Fetch and display weather
+    async function fetchWeather(url, place) {
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const weather = data.current_weather;
+        const temp = weather.temperature;
+        const wind = weather.windspeed;
+        const cond = weather.weathercode;
+
+        const conditions = {
+          0: "Clear Sky ☀️",
+          1: "Mainly Clear 🌤",
+          2: "Partly Cloudy ⛅",
+          3: "Overcast ☁️",
+          45: "Fog 🌫",
+          48: "Rime Fog 🌫",
+          51: "Light Drizzle 🌦",
+          61: "Rain 🌧",
+          71: "Snow ❄️",
+          95: "Thunderstorm ⛈"
+        };
+
+        document.getElementById("weatherResult").innerHTML = `
+          <h2>${place}</h2>
+          <p>🌡 Temperature: ${temp} °C</p>
+          <p>${conditions[cond] || "Weather Code: " + cond}</p>
+          <p>🌬 Wind Speed: ${wind} km/h</p>
+        `;
+      } catch (error) {
+        console.error(error);
+        document.getElementById("weatherResult").innerHTML = `<p>⚠ Unable to fetch weather data.</p>`;
+      }
+    }
+  </script>
+
+</body>
+</html>

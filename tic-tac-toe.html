@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tic‑Tac‑Toe</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --fg: #e2e8f0;
+      --accent: #3b82f6;
+      --accent-2: #22c55e;
+      --muted: #64748b;
+      --danger: #ef4444;
+      --cell-size: clamp(90px, 22vmin, 140px);
+      --gap: 12px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, sans-serif;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+    }
+    main.container {
+      width: min(95vw, 480px);
+      text-align: center;
+    }
+    h1 {
+      margin: 0 0 1rem;
+      font-size: 2rem;
+      letter-spacing: .02em;
+    }
+    .controls {
+      display: flex;
+      gap: .5rem;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    select, button {
+      background: #1e293b;
+      color: var(--fg);
+      border: 1px solid #334155;
+      border-radius: .5rem;
+      padding: .5rem .75rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:hover, select:hover {
+      border-color: var(--accent);
+    }
+    .board {
+      margin: 1rem auto;
+      display: grid;
+      grid-template-columns: repeat(3, var(--cell-size));
+      grid-template-rows: repeat(3, var(--cell-size));
+      gap: var(--gap);
+      width: calc(3 * var(--cell-size) + 2 * var(--gap));
+    }
+    .cell {
+      background: #1e293b;
+      border-radius: .75rem;
+      font-size: calc(var(--cell-size) * 0.6);
+      font-weight: 700;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      user-select: none;
+      transition: transform .08s ease, background .2s ease, box-shadow .2s ease;
+      outline: none;
+    }
+    .cell:focus-visible {
+      box-shadow: 0 0 0 3px var(--accent);
+    }
+    .cell:hover:not(.taken):not(.disabled) {
+      transform: scale(1.03);
+    }
+    .cell.taken {
+      cursor: default;
+    }
+    .cell.win {
+      background: var(--accent-2);
+      color: #0f172a;
+    }
+    .status {
+      min-height: 2.2rem;
+      margin-top: .5rem;
+      font-size: 1.1rem;
+    }
+    .scores {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin: .75rem 0 1.5rem;
+      color: var(--muted);
+    }
+    .scores span strong {
+      color: var(--fg);
+    }
+    footer {
+      margin-top: 2rem;
+      color: var(--muted);
+      font-size: .85rem;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f8fafc;
+        --fg: #0f172a;
+        --muted: #475569;
+      }
+      .cell { background: #e2e8f0; }
+      select, button { background: #e2e8f0; color: var(--fg); border-color: #cbd5e1; }
+      .board { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>Tic‑Tac‑Toe</h1>
+
+    <div class="controls">
+      <label for="mode" style="display:none;">Mode</label>
+      <select id="mode" aria-label="Game mode">
+        <option value="pvp">Player vs Player</option>
+        <option value="ai">Player vs AI</option>
+      </select>
+      <button id="reset" aria-label="Reset game">Reset</button>
+    </div>
+
+    <div class="board" id="board" role="grid" aria-label="Tic-Tac-Toe board"></div>
+
+    <div class="status" id="status"></div>
+
+    <div class="scores">
+      <span>X: <strong id="scoreX">0</strong></span>
+      <span>O: <strong id="scoreO">0</strong></span>
+      <span>Ties: <strong id="scoreTies">0</strong></span>
+    </div>
+
+    <footer>Built with HTML, CSS &amp; JavaScript</footer>
+  </main>
+
+  <script>
+    const boardEl = document.getElementById('board');
+    const statusEl = document.getElementById('status');
+    const resetBtn = document.getElementById('reset');
+    const modeSelect = document.getElementById('mode');
+    const scoreXEl = document.getElementById('scoreX');
+    const scoreOEl = document.getElementById('scoreO');
+    const scoreTiesEl = document.getElementById('scoreTies');
+
+    const WIN_LINES = [
+      [0,1,2],[3,4,5],[6,7,8], // rows
+      [0,3,6],[1,4,7],[2,5,8], // cols
+      [0,4,8],[2,4,6]          // diagonals
+    ];
+
+    let state, scores;
+
+    function init() {
+      // create cells once
+      if (!boardEl.hasChildNodes()) {
+        for (let i = 0; i < 9; i++) {
+          const cell = document.createElement('button');
+          cell.className = 'cell';
+          cell.setAttribute('role', 'gridcell');
+          cell.setAttribute('aria-label', `Cell ${i+1}`);
+          cell.dataset.index = i;
+          cell.addEventListener('click', onCellClick);
+          cell.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault(); cell.click();
+            }
+          });
+          boardEl.appendChild(cell);
+        }
+      }
+      scores = { X: 0, O: 0, T: 0 };
+      newGame();
+      updateScores();
+    }
+
+    function newGame() {
+      state = {
+        board: Array(9).fill(null),
+        player: 'X',
+        running: true,
+        mode: modeSelect.value
+      };
+      [...boardEl.children].forEach(c => {
+        c.textContent = '';
+        c.classList.remove('taken', 'win', 'disabled');
+        c.disabled = false;
+      });
+      setStatus(`Player ${state.player}'s turn`);
+      if (state.mode === 'ai' && state.player === 'O') aiMove();
+    }
+
+    function updateScores() {
+      scoreXEl.textContent = scores.X;
+      scoreOEl.textContent = scores.O;
+      scoreTiesEl.textContent = scores.T;
+    }
+
+    function setStatus(msg, danger=false) {
+      statusEl.textContent = msg;
+      statusEl.style.color = danger ? 'var(--danger)' : 'inherit';
+    }
+
+    function onCellClick(e) {
+      const idx = +e.currentTarget.dataset.index;
+      if (!state.running || state.board[idx]) return;
+
+      makeMove(idx, state.player);
+
+      const result = evaluateState(state.board);
+      if (!handleResult(result)) {
+        state.player = state.player === 'X' ? 'O' : 'X';
+        setStatus(`Player ${state.player}'s turn`);
+        if (state.mode === 'ai' && state.player === 'O') {
+          setTimeout(aiMove, 100);
+        }
+      }
+    }
+
+    function makeMove(index, player) {
+      state.board[index] = player;
+      const cell = boardEl.children[index];
+      cell.textContent = player;
+      cell.classList.add('taken');
+      cell.disabled = true;
+    }
+
+    function evaluateState(b) {
+      for (const [a,b1,c] of WIN_LINES) {
+        if (b[a] && b[a] === b[b1] && b[a] === b[c]) {
+          return { winner: b[a], line: [a,b1,c] };
+        }
+      }
+      if (b.every(Boolean)) return { tie: true };
+      return null;
+    }
+
+    function handleResult(res) {
+      if (!res) return false;
+      state.running = false;
+      [...boardEl.children].forEach(c => c.classList.add('disabled'));
+      if (res.winner) {
+        scores[res.winner]++;
+        updateScores();
+        res.line.forEach(i => boardEl.children[i].classList.add('win'));
+        setStatus(`Player ${res.winner} wins!`);
+      } else {
+        scores.T++;
+        updateScores();
+        setStatus(`It's a tie!`);
+      }
+      return true;
+    }
+
+    // ------- Minimax AI -------
+    function aiMove() {
+      if (!state.running) return;
+      const best = bestMove(state.board, 'O');
+      makeMove(best.index, 'O');
+      const res = evaluateState(state.board);
+      if (!handleResult(res)) {
+        state.player = 'X';
+        setStatus(`Player ${state.player}'s turn`);
+      }
+    }
+
+    function bestMove(board, aiPlayer) {
+      const huPlayer = 'X';
+      const avail = emptyIndices(board);
+      if (board.filter(Boolean).length === 1 && board[4] === null) {
+        return { index: 4 };
+      }
+      let best = { score: -Infinity, index: avail[0] };
+      for (const idx of avail) {
+        const newBoard = board.slice();
+        newBoard[idx] = aiPlayer;
+        const score = minimax(newBoard, huPlayer, aiPlayer);
+        if (score > best.score) {
+          best = { score, index: idx };
+        }
+      }
+      return best;
+    }
+
+    function minimax(newBoard, player, aiPlayer) {
+      const huPlayer = aiPlayer === 'O' ? 'X' : 'O';
+      const result = evaluateState(newBoard);
+      if (result && result.winner === aiPlayer) return 10;
+      if (result && result.winner === huPlayer) return -10;
+      if (result && result.tie) return 0;
+
+      const avail = emptyIndices(newBoard);
+      const scores = [];
+
+      for (const idx of avail) {
+        const boardCopy = newBoard.slice();
+        boardCopy[idx] = player;
+        const score = minimax(boardCopy, player === 'X' ? 'O' : 'X', aiPlayer);
+        scores.push(score);
+      }
+
+      return player === aiPlayer ? Math.max(...scores) - 1 : Math.min(...scores) + 1;
+    }
+
+    function emptyIndices(b) {
+      const arr = [];
+      for (let i = 0; i < b.length; i++) if (!b[i]) arr.push(i);
+      return arr;
+    }
+
+    // ------- Events -------
+    resetBtn.addEventListener('click', newGame);
+    modeSelect.addEventListener('change', () => {
+      newGame();
+      setStatus(`Player ${state.player}'s turn`);
+    });
+
+    init();
+  </script>
+</body>
+</html>

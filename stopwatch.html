@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stopwatch</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --fg: #e2e8f0;
+      --accent: #6366f1;
+      --accent-dark: #4f46e5;
+      --muted: #94a3b8;
+      --danger: #ef4444;
+      --radius: 14px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at 20% 20%, #1e293b, #0f172a 70%);
+      color: var(--fg);
+      padding: 1.25rem;
+    }
+    .card {
+      width: 100%;
+      max-width: 520px;
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--radius);
+      box-shadow: 0 20px 40px rgba(0,0,0,.25);
+      padding: 1.75rem;
+    }
+    h1 {
+      margin: 0 0 1rem;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-align: center;
+      letter-spacing: .05em;
+    }
+    .time {
+      font-variant-numeric: tabular-nums;
+      text-align: center;
+      font-size: clamp(2.4rem, 8vw, 4.5rem);
+      font-weight: 700;
+      margin: 0 0 1.25rem;
+    }
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: .75rem;
+      margin-bottom: 1rem;
+    }
+    button {
+      appearance: none;
+      border: none;
+      border-radius: calc(var(--radius) - 4px);
+      padding: .85rem 1rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+      transition: transform .08s, opacity .15s, background .2s;
+    }
+    button:hover:not(:disabled) { transform: translateY(-1px); }
+    button:active:not(:disabled) { transform: translateY(0); }
+    button:disabled {
+      opacity: .35;
+      cursor: not-allowed;
+    }
+    .btn-secondary { background: rgba(255,255,255,.08); color: var(--fg); }
+    .btn-danger   { background: var(--danger); }
+    .laps {
+      max-height: 220px;
+      overflow: auto;
+      border-top: 1px solid rgba(255,255,255,.06);
+      margin-top: 1rem;
+      padding-top: .75rem;
+      scrollbar-width: thin;
+    }
+    .laps li {
+      display: flex;
+      justify-content: space-between;
+      padding: .35rem 0;
+      border-bottom: 1px dashed rgba(255,255,255,.06);
+      font-variant-numeric: tabular-nums;
+    }
+    .shortcut-hint {
+      margin-top: .75rem;
+      font-size: .85rem;
+      color: var(--muted);
+      text-align: center;
+    }
+    kbd {
+      background: rgba(255,255,255,.08);
+      border-radius: 6px;
+      padding: 0 .35rem;
+      font-size: .85em;
+    }
+  </style>
+</head>
+<body>
+  <main class="card" role="application" aria-label="Stopwatch application">
+    <h1>Stopwatch</h1>
+    <div id="display" class="time" aria-live="polite" aria-atomic="true">00:00.00</div>
+
+    <div class="buttons">
+      <button id="startPauseBtn">Start</button>
+      <button id="lapBtn" class="btn-secondary" disabled>Lap</button>
+      <button id="resetBtn" class="btn-danger" disabled>Reset</button>
+    </div>
+
+    <ol id="laps" class="laps" aria-label="Lap times"></ol>
+
+    <p class="shortcut-hint">
+      Shortcuts: <kbd>Space</kbd> start/pause, <kbd>L</kbd> lap, <kbd>R</kbd> reset
+    </p>
+  </main>
+
+  <script>
+    const displayEl = document.getElementById('display');
+    const startPauseBtn = document.getElementById('startPauseBtn');
+    const lapBtn = document.getElementById('lapBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const lapsEl = document.getElementById('laps');
+
+    let startTime = 0;     // timestamp when (re)started
+    let elapsed = 0;       // accumulated time when paused
+    let intervalId = null; // requestAnimationFrame id
+    let lapCount = 0;
+    let lastLapElapsed = 0;
+
+    function format(ms) {
+      const totalMs = Math.floor(ms);
+      const minutes = Math.floor(totalMs / 60000);
+      const seconds = Math.floor((totalMs % 60000) / 1000);
+      const centis  = Math.floor((totalMs % 1000) / 10); // hundredths
+      return `${String(minutes).padStart(2, '0')}:` +
+             `${String(seconds).padStart(2, '0')}.` +
+             `${String(centis).padStart(2, '0')}`;
+    }
+
+    function tick() {
+      const now = performance.now();
+      const currentElapsed = elapsed + (now - startTime);
+      updateDisplay(currentElapsed);
+      intervalId = requestAnimationFrame(tick);
+    }
+
+    function updateDisplay(ms) {
+      displayEl.textContent = format(ms);
+    }
+
+    function start() {
+      startTime = performance.now();
+      intervalId = requestAnimationFrame(tick);
+      startPauseBtn.textContent = 'Pause';
+      lapBtn.disabled = false;
+      resetBtn.disabled = false;
+    }
+
+    function pause() {
+      cancelAnimationFrame(intervalId);
+      intervalId = null;
+      const now = performance.now();
+      elapsed += (now - startTime);
+      startPauseBtn.textContent = 'Resume';
+    }
+
+    function reset() {
+      cancelAnimationFrame(intervalId);
+      intervalId = null;
+      startTime = 0;
+      elapsed = 0;
+      lastLapElapsed = 0;
+      lapCount = 0;
+      updateDisplay(0);
+      startPauseBtn.textContent = 'Start';
+      lapBtn.disabled = true;
+      resetBtn.disabled = true;
+      lapsEl.innerHTML = '';
+    }
+
+    function addLap() {
+      const nowElapsed = intervalId ? (elapsed + (performance.now() - startTime)) : elapsed;
+      const lapTime = nowElapsed - lastLapElapsed;
+      lastLapElapsed = nowElapsed;
+
+      const li = document.createElement('li');
+      li.innerHTML = `<span>Lap ${++lapCount}</span><span>${format(lapTime)}</span>`;
+      lapsEl.prepend(li); // newest on top
+    }
+
+    startPauseBtn.addEventListener('click', () => {
+      if (!intervalId && elapsed === 0) {
+        start();
+      } else if (intervalId) {
+        pause();
+      } else {
+        startTime = performance.now();
+        intervalId = requestAnimationFrame(tick);
+        startPauseBtn.textContent = 'Pause';
+      }
+    });
+
+    lapBtn.addEventListener('click', addLap);
+    resetBtn.addEventListener('click', reset);
+
+    // Keyboard shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        startPauseBtn.click();
+      } else if (e.key.toLowerCase() === 'l') {
+        if (!lapBtn.disabled) addLap();
+      } else if (e.key.toLowerCase() === 'r') {
+        if (!resetBtn.disabled) reset();
+      }
+    });
+  </script>
+</body>
+</html>
